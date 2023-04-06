@@ -83,19 +83,19 @@ const signin = async (req, res)=>{
     const user = await User.findOne({email});
     const passwords = await bcrypt.compare(password, user.password);
     
-    if(user && passwords){
+    if(!email || !password){
+        res.status(400).send({error: "please fill all the input to sign in!"})
+    }else if(!user){
+        res.status(400).send({error: 'User is not registerd!'});
+    }else if(!passwords){
+        res.status(400).send({error: "Password is not correct!"})
+    }else if(user && passwords){
         res.json({
             _id: user.id,
             name: user.name,
             email: user.email,
             token: generateToken(user._id)
         })
-    }else if(!user){
-        res.status(400).send({error: 'User is not registerd!'});
-    }else if(!passwords){
-        res.status(400).send({error: "Password is not correct!"})
-    }else if(!email || !passwords){
-        res.status(400).send({error: "please fill all the input to sign in!"})
     }
 }
 
