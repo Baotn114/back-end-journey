@@ -7,6 +7,9 @@ const User = require('../dbModels/user');
 // khai bao model comment
 const Comment = require('../dbModels/comments');
 
+//khai bao validator
+const validator = require('validator');
+
 // khai bao model post
 const Post = require('../dbModels/posts')
 
@@ -36,6 +39,9 @@ const signup = async (req, res) =>{
     //Kiem tra xem co day du thong tin chua
     if(!name || !email || !password || !repassword){
         res.status(400).send({error: 'Please add all fields to continue!'});
+    }
+    else if (!validator.isEmail(email)){
+        res.status(400).send({error: 'It has to be an email'});
     }
     else if( !(password === repassword)){ //Kiem tra xem password va nhap lai password dung chua
         res.status(400).send({error: 'Your password are not matched!'})
