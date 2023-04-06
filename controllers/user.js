@@ -94,7 +94,7 @@ const signin = async (req, res)=>{
         res.status(400).send({error: 'User is not registerd!'});
     }else if(!passwords){
         res.status(400).send({error: "Password is not correct!"})
-    }else if(!user || !passwords){
+    }else if(!email || !passwords){
         res.status(400).send({error: "please fill all the input to sign in!"})
     }
 }
