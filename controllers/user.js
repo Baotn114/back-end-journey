@@ -194,6 +194,10 @@ const userPost = async (req, res) =>{
 const deletePost = async (req, res) =>{
     const postId = req.params['id'];
     try {
+        // const response = await Promise.all([
+        //     Post.findByIdAndDelete({_id: postId}),
+        //     Comment.deleteMany({post: postId})
+        //   ]);
         const response = await Post.findByIdAndDelete({_id: postId});
         await Comment.deleteMany({post: postId});
         // if(!response){
