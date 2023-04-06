@@ -95,7 +95,7 @@ const signin = async (req, res)=>{
     }else if(!password){
         res.status(400).send({error: "Password is not correct!"})
     }else if(!user || !password){
-        res.status(400).send({"please fill all the input to sign in!"})
+        res.status(400).send({error: "please fill all the input to sign in!"})
     }
 }
 
