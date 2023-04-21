@@ -7,9 +7,6 @@ const User = require('../dbModels/user');
 // khai bao model comment
 const Comment = require('../dbModels/comments');
 
-//khai bao validator
-const validator = require('validator');
-
 // khai bao model post
 const Post = require('../dbModels/posts')
 
@@ -19,12 +16,36 @@ const bcrypt = require('bcrypt');
 // khai bao jwt
 const jwt = require('jsonwebtoken');
 
-//Tao function de create JWT
+// khai bao nodemailer
+const nodemailer = require('nodemailer');
+
+
+//Tao function de create JWT khi nguoi dung dang nhap
 const generateToken = (id)=>{
     return jwt.sign({ id }, process.env.JWT_SECRET, {
         expiresIn: '1d'
     })
 }
+
+//Tao function de create token khi nguoi dung verify email
+const tokenCreate = (email)=> {
+    return jwt.sign({email}, process.env.JWT_SECRET, {
+        expiresIn: '1d'
+    })
+}
+
+// Tao transport
+let transport = nodemailer.createTransport({
+    service: 'gmail',
+    port: 465,
+    secure: true,
+    auth:{
+        user: process.env.EMAIL,
+        pass: process.env.PASS
+    },
+    host: "smtp.gmail.com"
+})
+
 
 //Sign up
 const signup = async (req, res) =>{
@@ -40,38 +61,94 @@ const signup = async (req, res) =>{
     if(!name || !email || !password || !repassword){
         res.status(400).send({error: 'Please add all fields to continue!'});
     }
-    else if (!validator.isEmail(email)){
-        res.status(400).send({error: 'It has to be an email'});
-    }
     else if( !(password === repassword)){ //Kiem tra xem password va nhap lai password dung chua
         res.status(400).send({error: 'Your password are not matched!'})
     }
+    else if(userExist && userExist.verified == false){
+        //Neu khong co user trong Db thi ta tien hanh hashPassword
+        const salt = await bcrypt.genSalt(10);
+        const hashPassword = await bcrypt.hash(password, salt);
+        
+        //Tao Token de verify trong email
+        let token = tokenCreate(email);
+
+        //Update user vao trong dB
+        const user = await User.findOneAndUpdate(
+            {email: email},
+            {$set:{
+                name: name,
+                email: email,
+                password: hashPassword,
+                verified: false
+            }},
+            {new: true}
+        )
+
+        let Link = `http://localhost:3000/api/user/confirm-email?token=${token}`
+
+        let emailVerification = {
+            from: process.env.EMAIL,
+            to: email,
+            subject: "Email Verification",
+            html: `<p>Thank you for signing up for our service. Please confirm your email address by clicking on the following link:</p><br><a href="${Link}">${Link}</a>`
+        }
+
+        transport.sendMail(emailVerification, function(err, info){
+            if(err){
+                res.status(400).send({error: 'Email Verification sent failed!'})   
+            }else{
+                res.status(200).send({success: 'Email Verification sent successfully!'})
+            }
+        })
+    }
     else if(userExist){ //Kiem tra xem co Email trong Db chua
             res.status(400).send({error: 'Email is already in use!'})
-        }
+    }
     else if(!userExist){
         //Neu khong co user trong Db thi ta tien hanh hashPassword
         const salt = await bcrypt.genSalt(10);
         const hashPassword = await bcrypt.hash(password, salt);
-    
+        
+        //Tao Token de verify trong email
+        let token = tokenCreate(email);
+
         //Tao user vao trong dB
         const user = await User.create({
             name: name,
             email: email,
-            password: hashPassword
+            password: hashPassword,
+            verified: false
         })
-        //Gui tra ve cho client
-        if(user){
-            res.status(201).json({
-                _id: user.id,
-                name: user.name,
-                email: user.email,
-                token: generateToken(user._id)
-        })
-        }else{
-            res.status(400).send({error: 'Invalid User'})
+
+        let Link = `https://journey-diary.onrender.com/api/user/confirm-email?token=${token}` 
+
+        let emailVerification = {
+            from: process.env.EMAIL,
+            to: email,
+            subject: "Email Verification",
+            html: `<p>Thank you for signing up for our service. Please confirm your email address by clicking on the following link:</p><br><a href="${Link}">${Link}</a>`
         }
+
+        transport.sendMail(emailVerification, function(err, info){
+            if(err){
+                res.status(400).send({error: 'Email Verification sent failed!'})   
+            }else{
+                res.status(200).send({success: 'Email Verification sent successfully!'})
+            }
+        })
     }
+
+    //Gui tra ve cho client
+    // if(user){
+    //     res.status(201).json({
+    //         _id: user.id,
+    //         name: user.name,
+    //         email: user.email,
+    //         token: generateToken(user._id)
+    // })
+    // }else{
+    //     res.status(400).send({error: 'Invalid User'})
+    // }
 }
 
 //Sign in
@@ -81,24 +158,41 @@ const signin = async (req, res)=>{
 
     //Kiem tra xem user da dc dang ky chua
     const user = await User.findOne({email});
-
+    //
     if(!email || !password){
         res.status(400).send({error: "please fill all fields to continue!"});
     }else if(!user){
         res.status(400).send({error: "User is not registerd or Invalid user"})
     }else if(user){
         const passwords = await bcrypt.compare(password, user.password);
-        if(passwords){
-            res.json({
-                _id: user.id,
-                name: user.name,
-                email: user.email,
-                token: generateToken(user._id)
-            })
+        const verifiedUser = await user.verified;
+        console.log(verifiedUser)
+        if(verifiedUser){
+            if(passwords){
+                res.json({
+                    _id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    token: generateToken(user._id)
+                })
+            }else{
+                res.status(400).send({error: "Password is not correct!"})
+            }
         }else{
-            res.status(400).send({error: "Password is not correct!"})
+            res.status(400).send({error: "please verify your email!"})
         }
+        
     }
+    // if(user && (await bcrypt.compare(password, user.password))){
+    //     res.json({
+    //         _id: user.id,
+    //         name: user.name,
+    //         email: user.email,
+    //         token: generateToken(user._id)
+    //     })
+    // }else{
+    //     res.status(400).send({error: 'User is not registerd'});
+    // }
 }
 
 // post Comment
@@ -206,10 +300,6 @@ const userPost = async (req, res) =>{
 const deletePost = async (req, res) =>{
     const postId = req.params['id'];
     try {
-        // const response = await Promise.all([
-        //     Post.findByIdAndDelete({_id: postId}),
-        //     Comment.deleteMany({post: postId})
-        //   ]);
         const response = await Post.findByIdAndDelete({_id: postId});
         await Comment.deleteMany({post: postId});
         // if(!response){
@@ -287,11 +377,32 @@ const updateAvatar = async (req, res) =>{
         res.status(200).json(avatar);
     }
 }
-module.exports = {signup, signin, comment, comments, userComment, deleteComment, updateComment, userPost, updatePost, deletePost, getProfile, updateAvatar}
+
+// In gmail, verify the email
+const emailConfirm = async (req, res) =>{
+    const token = req.query.token;
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const email = decoded.email;
+        // const expired = new Date(decoded.exp * 1000);
+        // console.log(expired);
+        const userEmailSignUp = await User.findOne({email});
+        if (userEmailSignUp){
+            await User.findOneAndUpdate(
+                {email: email},
+                {$set : {
+                    verified: true
+                }},
+                {new: true}
+            )
+            setTimeout(()=>{
+                res.redirect('/signIn')        
+            }, 2000)
+        }
+    } catch (error) {
+        res.redirect('/401'); // redirect to 401 page if the token is expired 
+    }
+}
 
 
-
-
-
-
-
+module.exports = {signup, signin, comment, comments, userComment, deleteComment, updateComment, userPost, updatePost, deletePost, getProfile, updateAvatar, emailConfirm}

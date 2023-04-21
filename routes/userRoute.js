@@ -17,7 +17,8 @@ const {
     updatePost,
     deletePost,
     getProfile,
-    updateAvatar
+    updateAvatar,
+    emailConfirm
 } = require('../controllers/user');
 
 
@@ -29,6 +30,9 @@ router.post('/signin', signin)
 
 // Get comments 
 router.get('/comments/:id', comments)
+
+//Route to verify email
+router.get('/confirm-email', emailConfirm)
 
 //Them vao middleware, neu co user thi moi cho phep ta.o comment, hoac la quan li comment trong profile
 const {protect} = require('../middleware/authMiddleware');
