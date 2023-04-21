@@ -399,7 +399,7 @@ const emailConfirm = async (req, res) =>{
             }, 2000)
         }
     } catch (error) {
-        res.redirect('/401'); // redirect to 401 page if the token is expired 
+        res.redirect('https://journey-diary.onrender.com/401'); // redirect to 401 page if the token is expired 
     }
 }
 
