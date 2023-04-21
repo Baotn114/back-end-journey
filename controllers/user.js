@@ -395,7 +395,7 @@ const emailConfirm = async (req, res) =>{
                 {new: true}
             )
             setTimeout(()=>{
-                res.redirect('/sign-in')        
+                res.redirect('https://journey-diary.onrender.com/sign-in')        
             }, 2000)
         }
     } catch (error) {
