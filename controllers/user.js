@@ -381,6 +381,7 @@ const updateAvatar = async (req, res) =>{
 // In gmail, verify the email
 const emailConfirm = async (req, res) =>{
     const token = req.query.token;
+    res.json({message: "click oke"})
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const email = decoded.email;
@@ -398,7 +399,6 @@ const emailConfirm = async (req, res) =>{
             setTimeout(()=>{
                 res.redirect('/sign-in')        
             }, 2000)
-            res.json({message: "click oke"})
         }
     } catch (error) {
         res.redirect('/401'); // redirect to 401 page if the token is expired 
