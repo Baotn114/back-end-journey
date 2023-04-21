@@ -396,7 +396,7 @@ const emailConfirm = async (req, res) =>{
                 {new: true}
             )
             setTimeout(()=>{
-                res.redirect('/signIn')        
+                res.redirect('/sign-in')        
             }, 2000)
         }
     } catch (error) {
