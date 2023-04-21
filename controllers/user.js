@@ -166,7 +166,6 @@ const signin = async (req, res)=>{
     }else if(user){
         const passwords = await bcrypt.compare(password, user.password);
         const verifiedUser = await user.verified;
-        console.log(verifiedUser)
         if(verifiedUser){
             if(passwords){
                 res.json({
@@ -381,7 +380,6 @@ const updateAvatar = async (req, res) =>{
 // In gmail, verify the email
 const emailConfirm = async (req, res) =>{
     const token = req.query.token;
-    res.json({message: "click oke"})
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const email = decoded.email;
