@@ -30,7 +30,7 @@ const generateToken = (id)=>{
 //Tao function de create token khi nguoi dung verify email
 const tokenCreate = (email)=> {
     return jwt.sign({email}, process.env.JWT_SECRET, {
-        expiresIn: '120s'
+        expiresIn: '1s'
     })
 }
 
