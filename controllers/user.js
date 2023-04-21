@@ -120,7 +120,7 @@ const signup = async (req, res) =>{
             verified: false
         })
 
-        let Link = `https://journey-diary.onrender.com/api/user/confirm-email?token=${token}` 
+        let Link = `https://journey-diary-api.onrender.com/api/user/confirm-email?token=${token}` 
 
         let emailVerification = {
             from: process.env.EMAIL,
