@@ -398,7 +398,7 @@ const emailConfirm = async (req, res) =>{
             setTimeout(()=>{
                 res.redirect('/sign-in')        
             }, 2000)
-            res.send({message: "click oke"})
+            res.json({message: "click oke"})
         }
     } catch (error) {
         res.redirect('/401'); // redirect to 401 page if the token is expired 
